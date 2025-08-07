@@ -67,3 +67,6 @@ Desktop.ini
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Local development
+.local/
