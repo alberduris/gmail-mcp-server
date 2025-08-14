@@ -5,8 +5,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js"
-import { GmailService } from "./services/gmail.service"
-import { GmailConfig } from "./types"
+import { AccountManager } from "./services/account-manager"
 
 import { handleListEmails } from "./handlers/list-emails"
 import { handleGetEmailDetails } from "./handlers/get-email-details"
@@ -18,29 +17,23 @@ import { handleExtractForwardedContent } from "./handlers/extract-forwarded-cont
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
 const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
-const REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN
-const ALLOW_DIRECT_SEND = process.env.GMAIL_ALLOW_DIRECT_SEND === "true"
 
-if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error("❌ Error: Missing required environment variables")
   console.error("\n📋 Required variables:")
   console.error("  • GMAIL_CLIENT_ID")
   console.error("  • GMAIL_CLIENT_SECRET")
-  console.error("  • GMAIL_REFRESH_TOKEN")
-  console.error("\n🔧 Optional variables:")
-  console.error("  • GMAIL_ALLOW_DIRECT_SEND=true (enables direct email sending)")
-  console.error("\n💡 Run 'npm run setup' to generate these credentials")
+  console.error("\n💡 Set up accounts: npm run setup <accountId>")
   process.exit(1)
 }
 
-const config: GmailConfig = {
-  clientId: CLIENT_ID,
-  clientSecret: CLIENT_SECRET,
-  refreshToken: REFRESH_TOKEN,
-  allowDirectSend: ALLOW_DIRECT_SEND,
+let accountManager: AccountManager
+try {
+  accountManager = new AccountManager()
+} catch (error: any) {
+  console.error(error.message)
+  process.exit(1)
 }
-
-const gmailService = new GmailService(config)
 
 const server = new Server(
   {
@@ -81,6 +74,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Include emails from SPAM and TRASH folders",
               default: false,
             },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
           },
         },
       },
@@ -93,6 +90,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             emailId: { type: "string", description: "The email ID to process" },
             includeHtml: { type: "boolean", description: "Include HTML in output when available", default: false },
             maxDepth: { type: "number", description: "Max recursion depth for nested forwarded messages", default: 3, minimum: 1, maximum: 10 },
+            accountId: { type: "string", description: "Account ID to use (uses default account if not specified)" },
           },
           required: ["emailId"],
         },
@@ -112,6 +110,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Level of detail to retrieve",
               enum: ["full", "minimal", "metadata"],
               default: "full",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
             },
           },
           required: ["emailId"],
@@ -143,6 +145,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "BCC recipients (comma-separated)",
             },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
           },
           required: ["to", "subject", "body"],
         },
@@ -170,6 +176,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Include results from SPAM and TRASH",
               default: false,
             },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
           },
           required: ["query"],
         },
@@ -190,6 +200,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description:
                 "Custom reply message body. If not provided, a template will be used.",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
             },
           },
           required: ["senderName"],
@@ -229,6 +243,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Optional: Message ID of the email this is replying to (enables proper threading)",
             },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
           },
           required: ["to", "subject", "body"],
         },
@@ -242,25 +260,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   
   switch (request.params.name) {
     case "list_emails":
-      return handleListEmails(gmailService, args)
+      return handleListEmails(accountManager, args)
     
     case "get_email_details":
-      return handleGetEmailDetails(gmailService, args)
+      return handleGetEmailDetails(accountManager, args)
     
     case "send_email":
-      return handleSendEmail(gmailService, args)
+      return handleSendEmail(accountManager, args)
     
     case "search_emails":
-      return handleSearchEmails(gmailService, args)
+      return handleSearchEmails(accountManager, args)
     
     case "create_draft":
-      return handleCreateDraft(gmailService, args)
+      return handleCreateDraft(accountManager, args)
     
     case "find_and_draft_reply":
-      return handleFindAndDraftReply(gmailService, args)
+      return handleFindAndDraftReply(accountManager, args)
     
     case "extract_forwarded_content":
-      return handleExtractForwardedContent(gmailService, args)
+      return handleExtractForwardedContent(accountManager, args)
     
     default:
       throw new Error(`Unknown tool: ${request.params.name}`)
@@ -270,15 +288,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
+  
+  const accounts = accountManager.listAccounts()
+  const defaultAccount = accountManager.getDefaultAccountId()
+  
   console.error("✅ Gmail MCP Server started successfully")
+  console.error(`📧 OAuth Client: ${CLIENT_ID?.substring(0, 20)}...`)
+  console.error(`🏠 Default account: ${defaultAccount}`)
+  console.error("\n📬 Available accounts:")
+  
+  accounts.forEach(account => {
+    const status = account.hasToken ? "✅" : "❌ (no token)"
+    const defaultFlag = account.isDefault ? " (default)" : ""
+    console.error(`   • ${account.accountId}: ${account.email} ${status}${defaultFlag}`)
+  })
+  
   console.error(
-    `📧 Connected as: ${process.env.GMAIL_CLIENT_ID?.substring(0, 20)}...`
-  )
-  console.error(
-    "🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content"
-  )
-  console.error(
-    `🛡️ Security: Direct sending ${ALLOW_DIRECT_SEND ? "ENABLED" : "DISABLED (use create_draft instead)"}`
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content"
   )
 }
 

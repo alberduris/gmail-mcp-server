@@ -1,12 +1,18 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { ListEmailsInput, ListEmailsSchema } from "../schemas/tool-schemas"
 
 export async function handleListEmails(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
+    console.error("🔍 DEBUG: handleListEmails called with args:", JSON.stringify(args))
     const input = ListEmailsSchema.parse(args || {})
+    console.error("🔍 DEBUG: parsed input:", JSON.stringify(input))
+    const gmailService = accountManager.getAccount(input.accountId)
+    console.error("🔍 DEBUG: got gmail service for account:", input.accountId || "default")
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
+    console.error("🔍 DEBUG: got account info:", accountInfo.email)
     
     const messages = await gmailService.listEmails({
       maxResults: input.maxResults,
@@ -19,7 +25,7 @@ export async function handleListEmails(
         content: [
           {
             type: "text",
-            text: "📭 No emails found matching your criteria.",
+            text: `📭 No emails found matching your criteria.\n📧 Account: ${accountInfo.displayName} (${accountInfo.email})`,
           },
         ],
       }
@@ -31,7 +37,7 @@ export async function handleListEmails(
 
     let response_text = `📬 **Found ${emailDetails.length} email${
       emailDetails.length !== 1 ? "s" : ""
-    }**\n\n`
+    }**\n📧 Account: ${accountInfo.displayName} (${accountInfo.email})\n\n`
 
     emailDetails.forEach((email, index) => {
       response_text += `**${index + 1}. ${email.subject}**\n`
@@ -66,7 +72,9 @@ export async function handleListEmails(
       }
     }
     
-    console.error("Error listing emails:", error)
+    console.error("🔍 DEBUG: Error listing emails:", error)
+    console.error("🔍 DEBUG: Error type:", error.constructor.name)
+    console.error("🔍 DEBUG: Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)))
     return {
       content: [
         {

@@ -1,12 +1,14 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { SearchEmailsSchema } from "../schemas/tool-schemas"
 
 export async function handleSearchEmails(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
     const input = SearchEmailsSchema.parse(args || {})
+    const gmailService = accountManager.getAccount(input.accountId)
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
     
     const messages = await gmailService.listEmails({
       maxResults: input.maxResults,
@@ -19,7 +21,7 @@ export async function handleSearchEmails(
         content: [
           {
             type: "text",
-            text: `📭 No emails found for query: "${input.query}"\n\n💡 Try different search terms or check the Gmail search syntax guide.`,
+            text: `📭 No emails found for query: "${input.query}"\n📧 Account: ${accountInfo.displayName} (${accountInfo.email})\n\n💡 Try different search terms or check the Gmail search syntax guide.`,
           },
         ],
       }
@@ -32,7 +34,7 @@ export async function handleSearchEmails(
     let response_text = `🔍 **Search Results for: "${input.query}"**\n`
     response_text += `📊 Found ${emailDetails.length} email${
       emailDetails.length !== 1 ? "s" : ""
-    }\n\n`
+    }\n📧 Account: ${accountInfo.displayName} (${accountInfo.email})\n\n`
 
     emailDetails.forEach((email, index) => {
       response_text += `**${index + 1}. ${email.subject}**\n`

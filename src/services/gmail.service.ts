@@ -1,13 +1,21 @@
 import { google, gmail_v1 } from "googleapis"
 import { OAuth2Client } from "google-auth-library"
-import { GmailConfig, EmailDetails, GmailClient } from "../types"
+import { EmailDetails, GmailClient } from "../types"
 import { extractEmailBody } from "../utils/email-parser"
+
+interface GmailServiceConfig {
+  clientId: string
+  clientSecret: string
+  refreshToken: string
+  allowDirectSend: boolean
+  email: string
+}
 
 export class GmailService {
   private gmail: GmailClient
-  private config: GmailConfig
+  private config: GmailServiceConfig
 
-  constructor(config: GmailConfig) {
+  constructor(config: GmailServiceConfig) {
     this.config = config
     
     const oauth2Client = new OAuth2Client(
@@ -30,6 +38,10 @@ export class GmailService {
     return this.gmail
   }
 
+  getAccountEmail(): string {
+    return this.config.email
+  }
+
   isDirectSendAllowed(): boolean {
     return this.config.allowDirectSend
   }
@@ -48,6 +60,8 @@ export class GmailService {
     query?: string
     includeSpamTrash?: boolean
   }): Promise<gmail_v1.Schema$Message[]> {
+    console.error(`🔍 DEBUG: listEmails called for account ${this.config.email}`)
+    console.error(`🔍 DEBUG: options:`, JSON.stringify(options))
     const response = await this.gmail.users.messages.list({
       userId: "me",
       maxResults: Math.min(Math.max(options.maxResults || 10, 1), 100),

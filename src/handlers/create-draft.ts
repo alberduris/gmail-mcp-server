@@ -1,13 +1,15 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { CreateDraftSchema } from "../schemas/tool-schemas"
 import { encodeToBase64Url, encodeSubject } from "../utils/email-parser"
 
 export async function handleCreateDraft(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
     const input = CreateDraftSchema.parse(args || {})
+    const gmailService = accountManager.getAccount(input.accountId)
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
     
     const messageParts = [
       `MIME-Version: 1.0`,
@@ -46,6 +48,7 @@ export async function handleCreateDraft(
           text: `✅ **EMAIL DRAFT CREATED (Safe Mode)** 📝
 
 📝 **Draft Details:**
+• From: ${accountInfo.displayName} (${accountInfo.email})
 • To: ${input.to}
 • Subject: ${input.subject}
 • Draft ID: ${result.id}

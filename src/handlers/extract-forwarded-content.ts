@@ -1,14 +1,16 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { ExtractForwardedContentSchema } from "../schemas/tool-schemas"
 import { extractForwardedContentFromRaw } from "../utils/email-parser"
 import { ForwardedContentResult } from "../types"
 
 export async function handleExtractForwardedContent(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
     const input = ExtractForwardedContentSchema.parse(args || {})
+    const gmailService = accountManager.getAccount(input.accountId)
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
     
     const detail = await gmailService.getClient().users.messages.get({ 
       userId: "me", 
@@ -26,11 +28,21 @@ export async function handleExtractForwardedContent(
       maxDepth: Math.max(1, Math.min(10, input.maxDepth || 3)) 
     })
 
+    // Add account info to result
+    const resultWithAccount = {
+      ...result,
+      account: {
+        accountId: accountInfo.accountId,
+        email: accountInfo.email,
+        displayName: accountInfo.displayName
+      }
+    }
+
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify(result, null, 2),
+          text: JSON.stringify(resultWithAccount, null, 2),
         },
       ],
     }

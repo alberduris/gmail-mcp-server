@@ -1,572 +1,646 @@
-# 📧 Gmail MCP Server
+# 📧 Gmail Multi-Account MCP Server
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-1.17+-green)](https://modelcontextprotocol.org/)
 [![Gmail API](https://img.shields.io/badge/Gmail%20API-v1-red?logo=gmail)](https://developers.google.com/gmail/api)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-A powerful MCP (Model Context Protocol) server that enables AI assistants to
-interact with Gmail through OAuth2 authentication **with safety-first design**.
-Built with TypeScript and designed for seamless integration with Claude Desktop
-and other MCP-compatible clients.
+A powerful **Multi-Account Gmail MCP Server** that enables AI assistants to interact with multiple Gmail accounts simultaneously through OAuth2 authentication. Built with TypeScript and designed for seamless integration with **Claude Code** using the **Model Context Protocol**.
+
+## 🌟 What's New - Multi-Account Support
+
+✨ **Manage multiple Gmail accounts** from a single MCP server  
+🔄 **Switch between accounts** seamlessly with `accountId` parameter  
+🎯 **Account-specific settings** for enhanced security control  
+🚀 **Modern Claude Code integration** using `claude mcp add` commands  
+🛡️ **Enhanced safety** with per-account direct send controls
 
 ## 📑 Table of Contents
 
 - [Features](#-features)
 - [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-  - [Google Cloud Setup](#1-google-cloud-console-setup)
-  - [OAuth2 Credentials](#2-create-oauth2-credentials)
-  - [Generate Refresh Token](#3-generate-refresh-token)
-- [Usage](#-usage)
-  - [Standalone Server](#standalone-server)
-  - [Claude Desktop Integration](#claude-desktop-integration)
+- [Quick Start](#-quick-start)
+- [Multi-Account Setup](#-multi-account-setup)
+- [Claude Code Integration](#-claude-code-integration)
 - [Available Tools](#-available-tools)
+- [Configuration Reference](#-configuration-reference)
 - [Examples](#-examples)
 - [Troubleshooting](#-troubleshooting)
-- [Development](#-development)
+- [Migration from Single Account](#-migration-from-single-account)
 
 ## ✨ Features
 
-- 🛡️ **Safety First** - Draft-only mode by default prevents accidental email sends
-- 📝 **Smart Drafts** - Create drafts for new emails and replies with custom content
-- 📬 **List Emails** - Retrieve recent emails with advanced filtering options
-- 📖 **Get Email Details** - Fetch complete email content including attachments info
-- 🔍 **Search Emails** - Use Gmail's powerful search syntax to find specific emails
-- ✉️ **Send Emails** - Direct sending (disabled by default, enable with caution)
-- 🔐 **Secure OAuth2** - Industry-standard authentication with refresh token support
-- 🎯 **Type-Safe** - Full TypeScript implementation with strict typing
-- 🚀 **High Performance** - Optimized with parallel processing and smart caching
+### 🏢 Multi-Account Management
+- **Multiple Gmail accounts** in a single server instance
+- **Account switching** via `accountId` parameter in all tools
+- **Default account** fallback for seamless usage
+- **Per-account security settings** for granular control
+
+### 🛡️ Safety & Security
+- **Draft-first design** - Creates drafts by default to prevent accidental sends
+- **Per-account send permissions** - Enable direct sending only where needed
+- **Secure OAuth2 flow** with refresh token persistence
+- **Encrypted credential storage** in local configuration files
+
+### 📧 Email Operations
+- **📬 List emails** with advanced filtering and search
+- **📖 Get email details** with full content and metadata
+- **🔍 Advanced search** using Gmail's powerful query syntax
+- **📝 Smart drafts** for new emails and threaded replies
+- **✉️ Direct sending** (when explicitly enabled per account)
+- **🔄 Forwarded content extraction** with MIME parsing
+
+### 🚀 Performance & Integration
+- **Type-safe TypeScript** implementation
+- **Parallel processing** for multiple accounts
+- **Claude Code native integration** via MCP protocol
+- **Hot-reload development** support
 
 ## 📋 Prerequisites
 
-Before you begin, ensure you have:
+- **Node.js** 18.0+ and npm
+- **Google Cloud Console** access  
+- **Claude Code** (for MCP integration)
+- **Gmail accounts** you want to manage
 
-- **Node.js** 18.0 or higher
-- **npm** or **yarn** package manager
-- **Google Account** with Gmail enabled
-- **Google Cloud Console** access
-- **Claude Desktop** (optional, for integration)
+## 🚀 Quick Start
 
-## 📦 Installation
-
-1. **Clone the repository:**
+### 1. Clone and Install
 
 ```bash
 git clone https://github.com/JaviEzpeleta/gmail-mcp-server.git
 cd gmail-mcp-server
-```
-
-2. **Install dependencies:**
-
-```bash
 npm install
 ```
 
-3. **Create environment file:**
+### 2. Set Up OAuth Credentials
+
+Create your Google Cloud project and OAuth credentials:
 
 ```bash
+# Copy environment template
 cp .env.example .env
 ```
 
-> **🛡️ Security Note**: By default, direct email sending is disabled for safety. The server will create drafts instead, which you can review and send manually from Gmail.
-
-## ⚙️ Configuration
-
-### 1. Google Cloud Console Setup
-
-1. **Create or select a project:**
-
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Click on the project dropdown and select "New Project"
-   - Give your project a name (e.g., "Gmail MCP Server")
-   - Click "Create"
-
-2. **Enable Gmail API:**
-   - In the sidebar, navigate to **APIs & Services** → **Library**
-   - Search for "Gmail API"
-   - Click on **Gmail API** from the results
-   - Click **Enable**
-   - Wait for the API to be enabled (usually takes a few seconds)
-
-### 2. Create OAuth2 Credentials
-
-1. **Configure OAuth consent screen:**
-
-   - Go to **APIs & Services** → **OAuth consent screen**
-   - Select "External" user type (unless you have a Google Workspace account)
-   - Fill in the required fields:
-     - App name: "Gmail MCP Server"
-     - User support email: Your email
-     - Developer contact: Your email
-   - Add scopes:
-     - `https://www.googleapis.com/auth/gmail.readonly`
-     - `https://www.googleapis.com/auth/gmail.send`
-     - `https://www.googleapis.com/auth/gmail.modify`
-   - Add test users (important!):
-     - Add your Gmail address and any other accounts you want to use
-   - Save and continue through all steps
-
-2. **Create OAuth client:**
-   - Go to **APIs & Services** → **Credentials**
-   - Click **+ CREATE CREDENTIALS** → **OAuth client ID**
-   - Application type: **Web application** ⚠️ (NOT Desktop app)
-   - Name: "Gmail MCP Web Client"
-   - **Configure Authorized redirect URIs:**
-     - Click **+ ADD URI**
-     - Add: `http://localhost:8765/oauth2callback` (default port)
-     - If you plan to use a custom port, add: `http://localhost:YOUR_PORT/oauth2callback`
-   - Click **Create**
-   - **Download the credentials** (you'll see a download button or JSON option)
-   - Save the `client_id` and `client_secret` from the downloaded file
-
-> **⚠️ Important**: Desktop app type doesn't allow custom redirect URIs, but we need `localhost:PORT/oauth2callback` for the OAuth flow to work. That's why we use **Web application** instead.
-
-### 3. Generate Refresh Token
-
-1. **Add credentials to .env:**
-
+**Add to `.env`:**
 ```bash
-GMAIL_CLIENT_ID=your_client_id_here
+GMAIL_CLIENT_ID=your_client_id_here.apps.googleusercontent.com
 GMAIL_CLIENT_SECRET=your_client_secret_here
-GMAIL_REFRESH_TOKEN=
-# Security: Keep this false unless you need direct sending
-GMAIL_ALLOW_DIRECT_SEND=false
-# OAuth setup port (must match the redirect URI you configured above)
-OAUTH_REDIRECT_PORT=8765
+OAUTH_REDIRECT_PORT=8765  # Optional: customize OAuth port
 ```
 
-> **💡 Port Configuration**: The `OAUTH_REDIRECT_PORT` must match the port you configured in the Google Cloud Console redirect URI. If you used `http://localhost:8765/oauth2callback`, keep it as 8765. If you used a different port, update this value accordingly.
+> **🔧 Google Cloud Setup**: Follow the [detailed Google Cloud setup guide](#google-cloud-console-setup) below.
 
-2. **Run the setup script:**
+### 3. Configure Your Accounts
 
 ```bash
-npm run setup
-# or
-npm run dev src/get-refresh-token-desktop.ts
+# Copy accounts template
+cp config/accounts.json.example config/accounts.json
 ```
 
-3. **Authorize the application:**
+**Edit `config/accounts.json`:**
+```json
+{
+  "accounts": {
+    "personal": {
+      "email": "your.personal@gmail.com",
+      "refreshToken": "",
+      "displayName": "Personal Gmail",
+      "allowDirectSend": false
+    },
+    "work": {
+      "email": "your.work@company.com",
+      "refreshToken": "",
+      "displayName": "Work Gmail", 
+      "allowDirectSend": true
+    }
+  },
+  "defaultAccount": "personal"
+}
+```
 
-   - A browser window will open automatically
-   - Sign in with your Google account
-   - Grant all requested permissions
-   - You'll be redirected to a success page
-
-4. **Save the refresh token:**
-   - The terminal will display your refresh token
-   - Copy the complete `GMAIL_REFRESH_TOKEN` value
-   - Add it to your `.env` file
-
-## 🚀 Usage
-
-### Standalone Server
-
-1. **Build the project:**
+### 4. Authorize Your Accounts
 
 ```bash
+# Authorize each account (one at a time)
+npm run setup personal
+npm run setup work
+
+# The browser will open for OAuth - authorize each account
+```
+
+### 5. Build and Test
+
+```bash
+# Build the server
 npm run build
-```
 
-2. **Start the server:**
-
-```bash
+# Test the server
 npm start
+# Should show: ✅ Gmail MCP Server started successfully
+# With all your accounts listed
 ```
 
-The server will start and listen for MCP commands via stdio.
+## 🏢 Multi-Account Setup
 
-### Claude Desktop Integration
+### Account Configuration Structure
 
-1. **Build the project first:**
-
-```bash
-npm run build
-```
-
-2. **Locate Claude Desktop config:**
-
-   - **macOS**:
-     `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-3. **Edit the configuration file:**
+Each account in `config/accounts.json` supports:
 
 ```json
 {
-  "mcpServers": {
-    "gmail": {
-      "command": "node",
-      "args": ["/absolute/path/to/gmail-mcp-server/dist/index.js"],
-      "env": {
-        "GMAIL_CLIENT_ID": "your_client_id",
-        "GMAIL_CLIENT_SECRET": "your_client_secret",
-        "GMAIL_REFRESH_TOKEN": "your_refresh_token",
-        "GMAIL_ALLOW_DIRECT_SEND": "false"
-      }
-    }
+  "accountId": {
+    "email": "account@gmail.com",          // Gmail address
+    "refreshToken": "generated_by_setup",  // Auto-generated via npm run setup
+    "displayName": "Friendly Name",        // For identification
+    "allowDirectSend": false               // Security: allow direct email sending
   }
 }
 ```
 
-4. **Restart Claude Desktop**
+### OAuth Setup Per Account
 
-5. **Verify the connection:**
-   - Open Claude Desktop
-   - Look for the 🔌 icon indicating MCP connection
-   - Try: "List my recent emails"
+```bash
+# Setup syntax
+npm run setup <accountId>
+
+# Examples
+npm run setup personal    # Sets up the "personal" account
+npm run setup work        # Sets up the "work" account  
+npm run setup client1     # Sets up the "client1" account
+```
+
+**What happens during setup:**
+1. 🌐 Opens browser for OAuth authorization
+2. 🔐 You authorize the specific Gmail account
+3. 💾 Refresh token is automatically saved to `config/accounts.json`
+4. ✅ Account is ready to use
+
+### Account Status Verification
+
+```bash
+npm start
+```
+
+**Output shows all accounts:**
+```
+✅ Gmail MCP Server started successfully
+📧 OAuth Client: 369702299702-4vu...
+🏠 Default account: personal
+
+📬 Available accounts:
+   • personal: your.personal@gmail.com ✅ (default)
+   • work: your.work@company.com ✅
+   • client1: client@example.com ❌ (no token)
+```
+
+### Adding Additional Gmail Accounts
+
+To add more Gmail accounts after initial setup:
+
+#### 1. Add Test User in Google Cloud Console
+```
+1. Go to Google Cloud Console → APIs & Services → OAuth consent screen
+2. Scroll down to "Test users" section
+3. Click "+ ADD USERS"
+4. Enter the new Gmail address: newaccount@gmail.com
+5. Click "Save"
+```
+
+#### 2. Add Account to Local Configuration
+Edit `config/accounts.json` and add the new account:
+
+```json
+{
+  "accounts": {
+    "personal": { ... },
+    "work": { ... },
+    "newaccount": {
+      "email": "newaccount@gmail.com",
+      "refreshToken": "",
+      "displayName": "New Account",
+      "allowDirectSend": false
+    }
+  },
+  "defaultAccount": "personal"
+}
+```
+
+#### 3. Authorize the New Account
+```bash
+npm run setup newaccount
+# Browser opens → Sign in with newaccount@gmail.com → Authorize
+```
+
+#### 4. Verify New Account is Active
+```bash
+npm start
+# Should show the new account in the list with ✅
+```
+
+#### 5. Restart Claude Code
+After adding new accounts, you **must restart Claude Code completely** for the changes to take effect:
+
+1. Close Claude Code entirely
+2. Restart Claude Code
+3. Return to your project
+
+> **⚠️ Important**: The MCP server caches account configurations. New accounts won't be available until Claude Code is fully restarted.
+
+**Important Notes:**
+- **Same OAuth app** handles all accounts - no need for new client credentials
+- **Test users required** while your app is in "Testing" mode in Google Cloud
+- **No limit** on number of test users you can add
+- **Each account gets its own security settings** in the config
+
+## 🔗 Claude Code Integration
+
+### Add MCP Server to Claude Code
+
+```bash
+# Navigate to your project directory
+cd /path/to/gmail-mcp-server
+
+# Add the MCP server to Claude Code
+claude mcp add gmail \
+  --env GMAIL_CLIENT_ID=your_client_id_here \
+  --env GMAIL_CLIENT_SECRET=your_client_secret_here \
+  -- node dist/server.js
+```
+
+### Verify Connection
+
+```bash
+# Check server status
+claude mcp get gmail
+# Should show: Status: ✓ Connected
+
+# List all MCP servers
+claude mcp list
+```
+
+### Using in Claude Code
+
+Once configured, all Gmail tools are available:
+
+```
+📧 List my recent emails from my work account
+🔍 Search my personal Gmail for emails from GitHub  
+📝 Create a draft reply to the latest email from john@company.com using my work account
+```
 
 ## 🛠️ Available Tools
 
-> **🛡️ Safety Notice**: Tools marked with 🛡️ create drafts by default for your safety. Direct sending tools marked with 🚨 are disabled by default.
+All tools support the optional `accountId` parameter. If not specified, uses the default account.
 
 ### 📬 list_emails
 
-List recent emails with optional filtering.
+List recent emails with filtering options.
 
 **Parameters:**
+- `maxResults` (1-100): Number of emails to return (default: 10)
+- `query` (string): Gmail search query (default: "")
+- `includeSpamTrash` (boolean): Include spam/trash folders (default: false)
+- `accountId` (string): Account to use (default: uses default account)
 
-- `maxResults` (number, 1-100): Maximum emails to return (default: 10)
-- `query` (string): Gmail search query (e.g., "is:unread")
-- `includeSpamTrash` (boolean): Include SPAM/TRASH folders (default: false)
-
-**Example:**
-
+**Examples:**
 ```
 List my 5 most recent unread emails
+List emails from my work account
+Show recent emails from GitHub in my personal account
 ```
 
 ### 📖 get_email_details
 
-Get complete details and content of a specific email.
+Get complete email content and metadata.
 
 **Parameters:**
+- `emailId` (required): Gmail message ID
+- `format` ("full"|"minimal"|"metadata"): Detail level (default: "full")
+- `accountId` (string): Account to use
 
-- `emailId` (string, required): The email ID to retrieve
-- `format` (string): Level of detail - "full", "minimal", or "metadata"
-  (default: "full")
-
-**Example:**
-
+**Examples:**
 ```
-Get the full content of email ID 18abc123def
+Get full details of email ID 18abc123def from my work account
+Show the content of the most recent email
 ```
 
-### 🛡️ create_draft
+### 📝 create_draft
 
-Create an email draft with optional CC/BCC recipients (recommended for AI assistants).
+Create email drafts (recommended for AI safety).
 
 **Parameters:**
+- `to` (required): Recipient email address
+- `subject` (required): Email subject
+- `body` (required): Email content
+- `cc`, `bcc` (optional): Additional recipients
+- `threadId`, `inReplyToMessageId` (optional): For threaded replies
+- `accountId` (string): Account to send from
 
-- `to` (string, required): Recipient email address
-- `subject` (string, required): Email subject
-- `body` (string, required): Email body (plain text or HTML)
-- `cc` (string): CC recipients (comma-separated)
-- `bcc` (string): BCC recipients (comma-separated)
-
-**Example:**
-
+**Examples:**
 ```
-Create a draft email to john@example.com with subject "Meeting Tomorrow" and body "Let's meet at 10 AM"
-```
-
-### 🚨 send_email (Disabled by Default)
-
-Send an email directly with optional CC/BCC recipients.
-
-**⚠️ Security Warning**: This tool is disabled by default. Set `GMAIL_ALLOW_DIRECT_SEND=true` to enable.
-
-**Parameters:**
-
-- `to` (string, required): Recipient email address
-- `subject` (string, required): Email subject
-- `body` (string, required): Email body (plain text or HTML)
-- `cc` (string): CC recipients (comma-separated)
-- `bcc` (string): BCC recipients (comma-separated)
-
-**Example:**
-
-```
-Send an email to john@example.com with subject "Meeting Tomorrow" and body "Let's meet at 10 AM"
+Create a draft email from my work account to client@company.com
+Draft a thank you email using my personal account
 ```
 
 ### 🔍 search_emails
 
-Search emails using Gmail's advanced search syntax.
+Search emails using Gmail's advanced syntax.
 
 **Parameters:**
+- `query` (required): Gmail search query
+- `maxResults` (1-100): Max results (default: 10)
+- `includeSpamTrash` (boolean): Include spam/trash (default: false)
+- `accountId` (string): Account to search
 
-- `query` (string, required): Gmail search query
-- `maxResults` (number, 1-100): Maximum results (default: 10)
-- `includeSpamTrash` (boolean): Include SPAM/TRASH (default: false)
+**Gmail Search Examples:**
+- `from:github.com` - Emails from GitHub
+- `subject:"invoice" has:attachment` - Invoices with attachments
+- `is:unread newer_than:3d` - Unread emails from last 3 days
+- `label:work` - Emails with "work" label
 
-**Example Gmail search queries:**
+### 🔄 find_and_draft_reply
 
-- `from:user@example.com` - Emails from a specific sender
-- `subject:"important meeting"` - Emails with exact phrase in subject
-- `has:attachment` - Emails with attachments
-- `is:unread` - Unread emails
-- `newer_than:2d` - Emails from last 2 days
-- `label:work` - Emails with specific label
-
-### 🛡️ find_and_draft_reply
-
-Find the latest email from a sender and create a draft reply with optional custom content.
+Find latest email from sender and create threaded draft reply.
 
 **Parameters:**
+- `senderName` (required): Sender name or email
+- `replyBody` (optional): Custom reply content
+- `accountId` (string): Account to use
 
-- `senderName` (string, required): Sender name or email address
-- `replyBody` (string, optional): Custom reply content (template used if not provided)
-
-**Example:**
-
+**Examples:**
 ```
-Create a draft reply to the latest email from John Smith saying "Thanks for your message. I'll get back to you soon."
+Draft a reply to the latest email from john@company.com using my work account
+Reply to the most recent email from support using my personal account
 ```
+
+### ✉️ send_email
+
+Send emails directly (requires allowDirectSend: true).
+
+**Parameters:**
+- `to` (required): Recipient email address
+- `subject` (required): Email subject  
+- `body` (required): Email content
+- `cc`, `bcc` (optional): Additional recipients
+- `accountId` (string): Account to send from
+
+**Security Notes:**
+- Only works if `allowDirectSend: true` in account config
+- Shows security warning when used
+- Prefer `create_draft` for AI safety
+
+### 📧 extract_forwarded_content
+
+Extract original content from forwarded emails using MIME parsing.
+
+**Parameters:**
+- `emailId` (required): Forwarded email ID
+- `includeHtml` (boolean): Include HTML content (default: false)
+- `maxDepth` (1-10): Max recursion depth (default: 3)
+- `accountId` (string): Account to use
+
+## ⚙️ Configuration Reference
+
+### Environment Variables (`.env`)
+
+```bash
+# Required: OAuth credentials (shared across all accounts)
+GMAIL_CLIENT_ID=your_client_id_here.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=your_client_secret_here
+
+# Optional: OAuth setup configuration
+OAUTH_REDIRECT_PORT=8765  # Port for OAuth callback (default: 8765)
+LOG_LEVEL=info           # Logging level (debug|info|warn|error)
+```
+
+### Account Configuration (`config/accounts.json`)
+
+```json
+{
+  "accounts": {
+    "accountId": {
+      "email": "account@gmail.com",
+      "refreshToken": "oauth_refresh_token",
+      "displayName": "Display Name",
+      "allowDirectSend": false
+    }
+  },
+  "defaultAccount": "accountId"
+}
+```
+
+**Account Settings:**
+- `email`: Gmail address for this account
+- `refreshToken`: Auto-generated by `npm run setup <accountId>`
+- `displayName`: Friendly name shown in responses
+- `allowDirectSend`: Enable direct email sending (security feature)
 
 ## 📚 Examples
 
-### Basic Usage Examples
+### Multi-Account Usage
 
-**List recent emails:**
-
+**List emails from specific accounts:**
 ```
-Show me my 10 most recent emails
-```
-
-**Search for specific emails:**
-
-```
-Search for emails from alice@example.com with attachments
+List recent emails from my work account
+Show unread emails from my personal Gmail
 ```
 
-**Create a draft email:**
-
+**Cross-account operations:**
 ```
-Create a draft email to bob@example.com saying "Thanks for your help!"
-```
-
-**Create a draft reply:**
-
-```
-Draft a reply to the latest email from support@company.com
+Search my work email for "project alpha" 
+Check my personal Gmail for emails from PayPal
 ```
 
-### Advanced Usage Examples
-
-**Complex search:**
-
+**Account-specific drafts:**
 ```
-Find all unread emails from the last week with "invoice" in the subject
+Create a draft from my work account to client@company.com about the proposal
+Draft a personal email to my friend about the weekend
 ```
 
-**Draft with CC:**
+### Advanced Queries
 
+**Complex searches:**
 ```
-Create a draft email to team@company.com with CC to manager@company.com about the project update
+Find all emails with invoices from last month in my work account
+Search personal Gmail for unread emails from family members
 ```
 
-**Get email details:**
-
+**Threaded replies:**
 ```
-Show me the full content of the most recent email from my boss
+Reply to the latest email from john@company.com using my work account
+Draft a follow-up to the GitHub notification in my personal email
 ```
 
 ## 🔧 Troubleshooting
 
-### Common Issues and Solutions
+### Account Setup Issues
 
-#### ❌ Error: Missing required environment variables
-
-**Solution:** Ensure all required environment variables are set in your `.env` file:
-
-- `GMAIL_CLIENT_ID`
-- `GMAIL_CLIENT_SECRET` 
-- `GMAIL_REFRESH_TOKEN`
-- `GMAIL_ALLOW_DIRECT_SEND` (optional, defaults to `false`)
-- `OAUTH_REDIRECT_PORT` (optional, defaults to `8765`)
-
-#### ❌ Error: redirect_uri_mismatch
-
-**Problem:** OAuth setup fails with "The redirect URI in the request does not match the ones authorized for the OAuth client."
-
-**Solution:** 
-1. Go to Google Cloud Console → APIs & Services → Credentials
-2. Click on your OAuth client
-3. In "Authorized redirect URIs", ensure you have: `http://localhost:8765/oauth2callback`
-4. If using a custom port, add: `http://localhost:YOUR_PORT/oauth2callback`
-5. Make sure your `.env` file has the matching `OAUTH_REDIRECT_PORT=8765`
-6. **Important**: OAuth client must be **Web application** type, not Desktop app
-
-> This error commonly occurs when following old documentation that suggests using "Desktop app" type, which doesn't support custom redirect URIs.
-
-#### 🛡️ Security: Direct email sending is disabled
-
-**This is normal and safe behavior.** By default, the server creates drafts instead of sending emails directly.
-
-**Solutions:**
-- **Recommended**: Use `create_draft` tool instead of `send_email`
-- **Alternative**: Set `GMAIL_ALLOW_DIRECT_SEND=true` in your `.env` file (not recommended for AI assistants)
-
-#### ❌ Error 403: access_denied
-
-**Solution:**
-
-1. Go to Google Cloud Console → OAuth consent screen
-2. Add your email as a test user
-3. Re-run the token generation process
-
-#### ❌ Error: invalid_grant
-
-**Solution:** Your refresh token has expired or is invalid
-
-1. Delete the old refresh token from `.env`
-2. Run `npm run setup` again
-3. Complete the authorization flow
-4. Update `.env` with the new token
-
-#### ❌ Gmail API not enabled
-
-**Solution:**
-
-1. Go to Google Cloud Console
-2. Navigate to APIs & Services → Library
-3. Search for "Gmail API"
-4. Click Enable
-
-#### ❌ Claude Desktop doesn't show the MCP server
-
-**Solution:**
-
-1. Verify the config file path is correct
-2. Ensure all paths in the config are absolute paths
-3. Check that the built files exist in `dist/`
-4. Restart Claude Desktop completely
-5. Check Claude Desktop logs for errors
-
-#### ❌ Rate limit exceeded
-
-**Solution:**
-
-- Gmail API has quotas (250 quota units per user per second)
-- Implement exponential backoff for retries
-- Reduce the number of parallel requests
-
-## 🔒 Security Guidelines
-
-### Draft-First Approach
-
-This server implements a **safety-first design** to prevent accidental email sends:
-
-- **Default behavior**: Creates drafts that require manual review
-- **Protection**: `send_email` tool is disabled by default
-- **User control**: Explicit environment variable required for direct sending
-
-### Recommended Usage
-
-✅ **Safe for AI assistants:**
-- `create_draft` - Creates email drafts
-- `find_and_draft_reply` - Creates reply drafts
-- `list_emails`, `search_emails`, `get_email_details` - Read-only operations
-
-⚠️ **Use with caution:**
-- `send_email` - Only enable if you fully trust the AI assistant and understand the risks
-
-### Best Practices
-
-1. **Keep `GMAIL_ALLOW_DIRECT_SEND=false`** unless absolutely necessary
-2. **Review all drafts** before sending manually from Gmail
-3. **Test thoroughly** in a safe environment before production use
-4. **Monitor usage** and check for unexpected behavior
-
-## 🔨 Development
-
-### Available Scripts
-
+**❌ Account not found in config**
 ```bash
-# Development with hot reload
-npm run dev
+# Add the account to config/accounts.json first, then run:
+npm run setup <accountId>
+```
 
-# Build TypeScript to JavaScript
+**❌ No accounts initialized**
+```bash
+# Check that accounts have refresh tokens:
+cat config/accounts.json
+# Re-run setup for accounts missing tokens:
+npm run setup <accountId>
+```
+
+### Authentication Problems
+
+**❌ invalid_grant error**
+```bash
+# Regenerate refresh token:
+npm run setup <accountId>
+# Complete OAuth flow in browser
+```
+
+**❌ redirect_uri_mismatch**
+- Verify Google Cloud OAuth client is **Web application** type
+- Ensure redirect URI is `http://localhost:8765/oauth2callback`
+- Match `OAUTH_REDIRECT_PORT` in `.env` with Google Cloud config
+
+### Claude Code Integration
+
+**❌ MCP server not connecting**
+```bash
+# Check MCP configuration:
+claude mcp get gmail
+
+# Rebuild and reconfigure if needed:
 npm run build
-
-# Start production server
-npm start
-
-# Generate OAuth refresh token
-npm run setup
-
-# Run tests
-npm test
-
-# Lint code
-npm run lint
-
+claude mcp remove gmail
+claude mcp add gmail --env GMAIL_CLIENT_ID=... --env GMAIL_CLIENT_SECRET=... -- node dist/server.js
 ```
 
-### Project Structure
+**❌ Tools not available**
+- Restart Claude Code completely
+- Verify server status: `claude mcp get gmail`
+- Check server logs: `npm start` should show connected accounts
 
-```
-gmail-mcp-server/
-├── src/
-│   ├── index.ts                 # Main server implementation
-│   └── get-refresh-token-desktop.ts # OAuth setup utility
-├── dist/                        # Compiled JavaScript (generated)
-├── examples/                    # Usage examples
-├── docs/                       # Additional documentation
-├── .env.example                # Environment variables template
-├── tsconfig.json              # TypeScript configuration
-├── package.json              # Project dependencies
-└── README.md                # This file
-```
+### Google Cloud Console Setup
 
-### Testing
+#### 1. Create OAuth2 Credentials
 
-Test the connection and basic functionality:
+1. **Go to [Google Cloud Console](https://console.cloud.google.com/)**
+2. **Create or select project**
+3. **Enable Gmail API:**
+   - Navigate to **APIs & Services** → **Library**
+   - Search for "Gmail API" and click **Enable**
 
+4. **Configure OAuth consent screen:**
+   - Go to **APIs & Services** → **OAuth consent screen**
+   - Choose "External" user type
+   - Fill required fields:
+     - App name: "Gmail MCP Server"
+     - User support email: Your email
+   - Add scopes:
+     - `https://www.googleapis.com/auth/gmail.readonly`
+     - `https://www.googleapis.com/auth/gmail.send`
+     - `https://www.googleapis.com/auth/gmail.modify`
+   - **Add test users:** Add all Gmail addresses you want to use
+
+5. **Create OAuth client:**
+   - Go to **APIs & Services** → **Credentials**
+   - Click **+ CREATE CREDENTIALS** → **OAuth client ID**
+   - **Application type:** Web application ⚠️ (Important!)
+   - **Authorized redirect URIs:** `http://localhost:8765/oauth2callback`
+   - Download the client ID and secret
+
+## 🔄 Migration from Single Account
+
+If you're upgrading from a single-account version:
+
+### 1. Backup Current Setup
 ```bash
-# Test Gmail connection
-npm run dev test-gmail-connection.ts
-
-# Test with MCP client
-npm run dev test-list-emails.js
+# Backup your current .env
+cp .env .env.backup
 ```
+
+### 2. Update Configuration
+```bash
+# Remove old refresh token from .env
+# Keep only GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET
+
+# Create accounts config
+cp config/accounts.json.example config/accounts.json
+# Edit with your account details
+```
+
+### 3. Re-authorize
+```bash
+# Setup your main account
+npm run setup main  # or whatever you call your account
+
+# Update MCP configuration  
+claude mcp remove gmail
+claude mcp add gmail --env GMAIL_CLIENT_ID=... --env GMAIL_CLIENT_SECRET=... -- node dist/server.js
+```
+
+## 🔒 Security Best Practices
+
+### Account Security
+- **Keep `allowDirectSend: false`** unless absolutely necessary
+- **Review drafts** before sending manually from Gmail
+- **Use specific accounts** for specific purposes (work vs personal)
+- **Regularly review** OAuth permissions in Google Account settings
+
+### Development Security
+- **Never commit** `config/accounts.json` to version control (it's gitignored)
+- **Use environment variables** for sensitive data in CI/CD
+- **Test thoroughly** in development before production use
+- **Monitor** for unexpected API usage
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! The multi-account architecture makes it easy to extend:
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. **Fork the repository**
+2. **Create feature branch:** `git checkout -b feature/amazing-feature`
+3. **Test with multiple accounts:** Ensure your changes work across accounts
+4. **Submit pull request** with clear description
+
+### Development Setup
+```bash
+# Clone and install
+git clone https://github.com/your-fork/gmail-mcp-server.git
+cd gmail-mcp-server
+npm install
+
+# Set up test accounts
+cp config/accounts.json.example config/accounts.json
+# Add your test accounts
+
+# Development mode with hot reload
+npm run dev
+```
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
-for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Google Gmail API](https://developers.google.com/gmail/api) for email
-  functionality
-- [Model Context Protocol](https://modelcontextprotocol.org/) for the MCP
-  specification
-- [Anthropic](https://anthropic.com/) for Claude and MCP development
+- **[Google Gmail API](https://developers.google.com/gmail/api)** for email functionality
+- **[Model Context Protocol](https://modelcontextprotocol.org/)** for the MCP specification  
+- **[Anthropic](https://anthropic.com/)** for Claude Code and MCP development
+- **[TypeScript](https://www.typescriptlang.org/)** for type safety and developer experience
 
 ## 📞 Support
 
-For issues, questions, or suggestions:
+For issues, questions, or feature requests:
 
-- Open an issue on
-  [GitHub](https://github.com/JaviEzpeleta/gmail-mcp-server/issues)
-- Check existing issues for solutions
-- Read the
-  [Gmail API documentation](https://developers.google.com/gmail/api/guides)
+- **📋 [Open an issue](https://github.com/JaviEzpeleta/gmail-mcp-server/issues)** on GitHub
+- **📖 Check existing issues** for solutions  
+- **📚 Read the [Gmail API docs](https://developers.google.com/gmail/api/guides)** for API questions
+- **💬 [Discussions](https://github.com/JaviEzpeleta/gmail-mcp-server/discussions)** for general questions
 
 ---
+
+**🚀 Ready to manage multiple Gmail accounts with AI?** Start with the [Quick Start](#-quick-start) guide!
 
 Made with ❤️ by [Javi Ezpeleta](https://github.com/JaviEzpeleta)

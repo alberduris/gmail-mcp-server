@@ -1,12 +1,16 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { SendEmailSchema } from "../schemas/tool-schemas"
 import { encodeToBase64Url, encodeSubject } from "../utils/email-parser"
 
 export async function handleSendEmail(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
+    const input = SendEmailSchema.parse(args || {})
+    const gmailService = accountManager.getAccount(input.accountId)
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
+    
     if (!gmailService.isDirectSendAllowed()) {
       return {
         content: [
@@ -19,7 +23,7 @@ export async function handleSendEmail(
 💡 **Safe alternatives:**
 • Use **create_draft** to create an email draft instead
 • Use **find_and_draft_reply** to reply to existing emails as drafts
-• Set GMAIL_ALLOW_DIRECT_SEND=true in your .env to enable direct sending
+• Enable direct sending for this account in config/accounts.json
 
 🛡️ **Why this protection exists:**
 This prevents AI assistants from accidentally sending emails without your review.
@@ -28,8 +32,6 @@ Always prefer creating drafts that you can review and send manually.`,
         ],
       }
     }
-
-    const input = SendEmailSchema.parse(args || {})
     
     const messageParts = [
       `Content-Type: text/plain; charset="UTF-8"`,
@@ -56,6 +58,7 @@ Always prefer creating drafts that you can review and send manually.`,
 
 ✅ **Email sent successfully!**
 
+📧 From: ${accountInfo.displayName} (${accountInfo.email})
 📧 To: ${input.to}
 📋 Subject: ${input.subject}
 🆔 Message ID: ${result.id}

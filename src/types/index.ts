@@ -60,11 +60,16 @@ export interface ParsedMail {
   }>
 }
 
-export interface GmailConfig {
-  clientId: string
-  clientSecret: string
+export interface AccountConfig {
+  email: string
   refreshToken: string
+  displayName: string
   allowDirectSend: boolean
+}
+
+export interface AccountsConfig {
+  accounts: Record<string, AccountConfig>
+  defaultAccount: string
 }
 
 export type GmailClient = gmail_v1.Gmail

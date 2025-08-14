@@ -1,13 +1,15 @@
-import { GmailService } from "../services/gmail.service"
+import { AccountManager } from "../services/account-manager"
 import { FindAndDraftReplySchema } from "../schemas/tool-schemas"
 import { encodeToBase64Url, encodeSubject, extractEmailAddress } from "../utils/email-parser"
 
 export async function handleFindAndDraftReply(
-  gmailService: GmailService,
+  accountManager: AccountManager,
   args: unknown
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
     const input = FindAndDraftReplySchema.parse(args || {})
+    const gmailService = accountManager.getAccount(input.accountId)
+    const accountInfo = accountManager.getAccountInfo(input.accountId)
     
     const searchQuery = `from:${input.senderName} -in:sent`
     
@@ -21,7 +23,7 @@ export async function handleFindAndDraftReply(
         content: [
           {
             type: "text",
-            text: `📭 No emails found from "${input.senderName}"\n\n💡 Try using:\n• Full email address (user@example.com)\n• Different name variation\n• Check if you received emails from this sender recently`,
+            text: `📭 No emails found from "${input.senderName}"\n📧 Account: ${accountInfo.displayName} (${accountInfo.email})\n\n💡 Try using:\n• Full email address (user@example.com)\n• Different name variation\n• Check if you received emails from this sender recently`,
           },
         ],
       }
@@ -88,6 +90,8 @@ Best regards`,
         {
           type: "text",
           text: `✅ **THREADED DRAFT REPLY CREATED** 🧵📝
+
+📧 **Reply account:** ${accountInfo.displayName} (${accountInfo.email})
 
 📧 **Original email:**
 • From: ${fromEmail}

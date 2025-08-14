@@ -1,0 +1,17 @@
+{
+  "accounts": {
+    "personal": {
+      "email": "your.personal@gmail.com",
+      "refreshToken": "",
+      "displayName": "Personal Gmail",
+      "allowDirectSend": false
+    },
+    "work": {
+      "email": "your.work@company.com", 
+      "refreshToken": "",
+      "displayName": "Work Gmail",
+      "allowDirectSend": true
+    }
+  },
+  "defaultAccount": "personal"
+}

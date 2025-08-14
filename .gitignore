@@ -70,3 +70,7 @@ Desktop.ini
 
 # Local development
 .local/
+
+# Config files with sensitive data
+config/accounts.json
+!config/accounts.json.example
