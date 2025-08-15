@@ -14,6 +14,7 @@ import { handleSearchEmails } from "./handlers/search-emails"
 import { handleCreateDraft } from "./handlers/create-draft"
 import { handleFindAndDraftReply } from "./handlers/find-and-draft-reply"
 import { handleExtractForwardedContent } from "./handlers/extract-forwarded-content"
+import { handleListAccounts } from "./handlers/list-accounts"
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
 const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
@@ -93,6 +94,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             accountId: { type: "string", description: "Account ID to use (uses default account if not specified)" },
           },
           required: ["emailId"],
+        },
+      },
+      {
+        name: "list_accounts",
+        description: "List all available Gmail accounts configured in the server",
+        inputSchema: {
+          type: "object",
+          properties: {},
         },
       },
       {
@@ -280,6 +289,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "extract_forwarded_content":
       return handleExtractForwardedContent(accountManager, args)
     
+    case "list_accounts":
+      return handleListAccounts(accountManager, args)
+    
     default:
       throw new Error(`Unknown tool: ${request.params.name}`)
   }
@@ -304,7 +316,7 @@ async function main() {
   })
   
   console.error(
-    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content"
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts"
   )
 }
 

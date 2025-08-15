@@ -152,4 +152,12 @@ export class AccountManager {
   getDefaultAccountId(): string {
     return this.config.defaultAccount
   }
+
+  getAccountConfig(accountId: string): AccountConfig {
+    const config = this.config.accounts[accountId]
+    if (!config) {
+      throw new Error(`❌ Account '${accountId}' not found in config`)
+    }
+    return config
+  }
 }

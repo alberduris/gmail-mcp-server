@@ -53,6 +53,10 @@ export const ExtractForwardedContentSchema = z.object({
   accountId: z.string().optional(),
 })
 
+export const ListAccountsSchema = z.object({
+  // No parameters needed - lists all available accounts
+})
+
 export type ListEmailsInput = z.infer<typeof ListEmailsSchema>
 export type GetEmailDetailsInput = z.infer<typeof GetEmailDetailsSchema>
 export type SendEmailInput = z.infer<typeof SendEmailSchema>
@@ -60,3 +64,4 @@ export type SearchEmailsInput = z.infer<typeof SearchEmailsSchema>
 export type CreateDraftInput = z.infer<typeof CreateDraftSchema>
 export type FindAndDraftReplyInput = z.infer<typeof FindAndDraftReplySchema>
 export type ExtractForwardedContentInput = z.infer<typeof ExtractForwardedContentSchema>
+export type ListAccountsInput = z.infer<typeof ListAccountsSchema>
