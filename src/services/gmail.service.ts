@@ -64,7 +64,7 @@ export class GmailService {
     console.error(`🔍 DEBUG: options:`, JSON.stringify(options))
     const response = await this.gmail.users.messages.list({
       userId: "me",
-      maxResults: Math.min(Math.max(options.maxResults || 10, 1), 100),
+      maxResults: options.maxResults || 500,
       q: options.query || "",
       includeSpamTrash: options.includeSpamTrash || false,
     })

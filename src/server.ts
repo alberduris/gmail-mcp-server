@@ -62,10 +62,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             maxResults: {
               type: "number",
-              description: "Maximum number of emails to return (1-100)",
-              default: 10,
+              description: "Maximum number of emails to return (1-500)",
+              default: 500,
               minimum: 1,
-              maximum: 100,
+              maximum: 500,
             },
             query: {
               type: "string",
@@ -178,10 +178,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             maxResults: {
               type: "number",
-              description: "Maximum number of results (1-100)",
-              default: 10,
+              description: "Maximum number of results (1-500)",
+              default: 500,
               minimum: 1,
-              maximum: 100,
+              maximum: 500,
             },
             includeSpamTrash: {
               type: "boolean",
@@ -212,6 +212,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description:
                 "Custom reply message body. If not provided, a template will be used.",
+            },
+            maxResults: {
+              type: "number",
+              description: "Maximum number of emails to search from sender (1-500)",
+              default: 500,
+              minimum: 1,
+              maximum: 500,
             },
             accountId: {
               type: "string",
@@ -311,10 +318,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             maxResults: {
               type: "number",
-              description: "Maximum number of emails to process (1-1000, default: 100)",
-              default: 100,
+              description: "Maximum number of emails to process (1-500, default: 500)",
+              default: 500,
               minimum: 1,
-              maximum: 1000,
+              maximum: 500,
             },
             preview: {
               type: "boolean",

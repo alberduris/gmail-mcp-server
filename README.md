@@ -298,7 +298,7 @@ All tools support the optional `accountId` parameter. If not specified, uses the
 List recent emails with filtering options.
 
 **Parameters:**
-- `maxResults` (1-100): Number of emails to return (default: 10)
+- `maxResults` (1-500): Number of emails to return (default: 500)
 - `query` (string): Gmail search query (default: "")
 - `includeSpamTrash` (boolean): Include spam/trash folders (default: false)
 - `accountId` (string): Account to use (default: uses default account)
@@ -349,7 +349,7 @@ Search emails using Gmail's advanced syntax.
 
 **Parameters:**
 - `query` (required): Gmail search query
-- `maxResults` (1-100): Max results (default: 10)
+- `maxResults` (1-500): Max results (default: 500)
 - `includeSpamTrash` (boolean): Include spam/trash (default: false)
 - `accountId` (string): Account to search
 
@@ -366,6 +366,7 @@ Find latest email from sender and create threaded draft reply.
 **Parameters:**
 - `senderName` (required): Sender name or email
 - `replyBody` (optional): Custom reply content
+- `maxResults` (1-500): Max emails to search from sender (default: 500)
 - `accountId` (string): Account to use
 
 **Examples:**
