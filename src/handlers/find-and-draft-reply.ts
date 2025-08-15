@@ -15,7 +15,7 @@ export async function handleFindAndDraftReply(
     
     const messages = await gmailService.listEmails({
       query: searchQuery,
-      maxResults: 1,
+      maxResults: input.maxResults || 500,
     })
 
     if (messages.length === 0) {

@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const ListEmailsSchema = z.object({
-  maxResults: z.number().min(1).max(100).default(10).optional(),
+  maxResults: z.number().min(1).max(500).default(500).optional(),
   query: z.string().default("").optional(),
   includeSpamTrash: z.boolean().default(false).optional(),
   accountId: z.string().optional(),
@@ -24,7 +24,7 @@ export const SendEmailSchema = z.object({
 
 export const SearchEmailsSchema = z.object({
   query: z.string().min(1),
-  maxResults: z.number().min(1).max(100).default(10).optional(),
+  maxResults: z.number().min(1).max(500).default(500).optional(),
   includeSpamTrash: z.boolean().default(false).optional(),
   accountId: z.string().optional(),
 })
@@ -43,6 +43,7 @@ export const CreateDraftSchema = z.object({
 export const FindAndDraftReplySchema = z.object({
   senderName: z.string().min(1),
   replyBody: z.string().optional(),
+  maxResults: z.number().min(1).max(500).default(500).optional(),
   accountId: z.string().optional(),
 })
 
@@ -69,7 +70,7 @@ export const UntrashEmailSchema = z.object({
 
 export const BulkTrashEmailsSchema = z.object({
   query: z.string().min(1),
-  maxResults: z.number().min(1).max(1000).default(100).optional(),
+  maxResults: z.number().min(1).max(500).default(500).optional(),
   preview: z.boolean().default(true).optional(),
   accountId: z.string().optional(),
 })
