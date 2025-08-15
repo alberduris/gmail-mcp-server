@@ -15,6 +15,9 @@ import { handleCreateDraft } from "./handlers/create-draft"
 import { handleFindAndDraftReply } from "./handlers/find-and-draft-reply"
 import { handleExtractForwardedContent } from "./handlers/extract-forwarded-content"
 import { handleListAccounts } from "./handlers/list-accounts"
+import { handleTrashEmail } from "./handlers/trash-email"
+import { handleUntrashEmail } from "./handlers/untrash-email"
+import { handleBulkTrashEmails } from "./handlers/bulk-trash-emails"
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
 const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
@@ -260,6 +263,72 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["to", "subject", "body"],
         },
       },
+      {
+        name: "trash_email",
+        description: "Move an email to trash (will be permanently deleted after 30 days)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            emailId: {
+              type: "string",
+              description: "The email ID to move to trash",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["emailId"],
+        },
+      },
+      {
+        name: "untrash_email",
+        description: "Restore an email from trash back to inbox",
+        inputSchema: {
+          type: "object",
+          properties: {
+            emailId: {
+              type: "string",
+              description: "The email ID to restore from trash",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["emailId"],
+        },
+      },
+      {
+        name: "bulk_trash_emails",
+        description: "Move multiple emails to trash based on search query (e.g., from:sender@domain.com)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Gmail search query to find emails (e.g., 'from:noreply@uber.com', 'subject:newsletter')",
+            },
+            maxResults: {
+              type: "number",
+              description: "Maximum number of emails to process (1-1000, default: 100)",
+              default: 100,
+              minimum: 1,
+              maximum: 1000,
+            },
+            preview: {
+              type: "boolean",
+              description: "Show preview of emails before trashing (default: true)",
+              default: true,
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["query"],
+        },
+      },
     ],
   }
 })
@@ -292,6 +361,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "list_accounts":
       return handleListAccounts(accountManager, args)
     
+    case "trash_email":
+      return handleTrashEmail(accountManager, args)
+    
+    case "untrash_email":
+      return handleUntrashEmail(accountManager, args)
+    
+    case "bulk_trash_emails":
+      return handleBulkTrashEmails(accountManager, args)
+    
     default:
       throw new Error(`Unknown tool: ${request.params.name}`)
   }
@@ -316,7 +394,7 @@ async function main() {
   })
   
   console.error(
-    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts"
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails"
   )
 }
 

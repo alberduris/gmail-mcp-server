@@ -109,6 +109,73 @@ export class GmailService {
     return response.data
   }
 
+  async trashEmail(messageId: string): Promise<gmail_v1.Schema$Message> {
+    const response = await this.gmail.users.messages.trash({
+      userId: "me",
+      id: messageId,
+    })
+    return response.data
+  }
+
+  async untrashEmail(messageId: string): Promise<gmail_v1.Schema$Message> {
+    const response = await this.gmail.users.messages.untrash({
+      userId: "me",
+      id: messageId,
+    })
+    return response.data
+  }
+
+  async searchEmailIds(options: {
+    query: string
+    maxResults?: number
+  }): Promise<string[]> {
+    const allIds: string[] = []
+    let pageToken: string | null | undefined = undefined
+    const maxResults = options.maxResults || 100
+
+    while (allIds.length < maxResults) {
+      const listParams: gmail_v1.Params$Resource$Users$Messages$List = {
+        userId: "me",
+        q: options.query,
+        maxResults: Math.min(500, maxResults - allIds.length), // Gmail API max is 500
+        pageToken: pageToken || undefined,
+      }
+      
+      const response = await this.gmail.users.messages.list(listParams)
+
+      const messages = response.data.messages || []
+      const messageIds = messages
+        .map((msg: gmail_v1.Schema$Message) => msg.id)
+        .filter((id): id is string => id !== null && id !== undefined)
+      allIds.push(...messageIds)
+
+      pageToken = response.data.nextPageToken
+      if (!pageToken || allIds.length >= maxResults) {
+        break
+      }
+    }
+
+    return allIds.slice(0, maxResults)
+  }
+
+  async batchTrashEmails(messageIds: string[]): Promise<void> {
+    // Gmail batchModify supports up to 1000 messages per request
+    const batchSize = 1000
+    
+    for (let i = 0; i < messageIds.length; i += batchSize) {
+      const batch = messageIds.slice(i, i + batchSize)
+      
+      await this.gmail.users.messages.batchModify({
+        userId: "me",
+        requestBody: {
+          ids: batch,
+          addLabelIds: ["TRASH"],
+          removeLabelIds: ["INBOX"]
+        }
+      })
+    }
+  }
+
   extractHeaders(message: gmail_v1.Schema$Message): { [key: string]: string } {
     const headers = message.payload?.headers || []
     const result: { [key: string]: string } = {}

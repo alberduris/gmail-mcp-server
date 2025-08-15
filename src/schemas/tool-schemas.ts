@@ -57,6 +57,23 @@ export const ListAccountsSchema = z.object({
   // No parameters needed - lists all available accounts
 })
 
+export const TrashEmailSchema = z.object({
+  emailId: z.string(),
+  accountId: z.string().optional(),
+})
+
+export const UntrashEmailSchema = z.object({
+  emailId: z.string(),
+  accountId: z.string().optional(),
+})
+
+export const BulkTrashEmailsSchema = z.object({
+  query: z.string().min(1),
+  maxResults: z.number().min(1).max(1000).default(100).optional(),
+  preview: z.boolean().default(true).optional(),
+  accountId: z.string().optional(),
+})
+
 export type ListEmailsInput = z.infer<typeof ListEmailsSchema>
 export type GetEmailDetailsInput = z.infer<typeof GetEmailDetailsSchema>
 export type SendEmailInput = z.infer<typeof SendEmailSchema>
@@ -65,3 +82,6 @@ export type CreateDraftInput = z.infer<typeof CreateDraftSchema>
 export type FindAndDraftReplyInput = z.infer<typeof FindAndDraftReplySchema>
 export type ExtractForwardedContentInput = z.infer<typeof ExtractForwardedContentSchema>
 export type ListAccountsInput = z.infer<typeof ListAccountsSchema>
+export type TrashEmailInput = z.infer<typeof TrashEmailSchema>
+export type UntrashEmailInput = z.infer<typeof UntrashEmailSchema>
+export type BulkTrashEmailsInput = z.infer<typeof BulkTrashEmailsSchema>
