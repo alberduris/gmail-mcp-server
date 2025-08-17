@@ -74,9 +74,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "Gmail search query (e.g., 'is:unread', 'from:user@example.com')",
               default: "",
             },
-            includeSpamTrash: {
+            includeArchived: {
               type: "boolean",
-              description: "Include emails from SPAM and TRASH folders",
+              description: "Include archived emails (emails without INBOX label)",
               default: false,
             },
             accountId: {

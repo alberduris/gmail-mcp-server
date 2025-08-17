@@ -17,7 +17,7 @@ export async function handleListEmails(
     const messages = await gmailService.listEmails({
       maxResults: input.maxResults,
       query: input.query,
-      includeSpamTrash: input.includeSpamTrash,
+      includeArchived: input.includeArchived,
     })
 
     if (messages.length === 0) {

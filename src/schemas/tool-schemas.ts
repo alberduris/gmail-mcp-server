@@ -3,7 +3,7 @@ import { z } from "zod"
 export const ListEmailsSchema = z.object({
   maxResults: z.number().min(1).max(500).default(500).optional(),
   query: z.string().default("").optional(),
-  includeSpamTrash: z.boolean().default(false).optional(),
+  includeArchived: z.boolean().default(false).optional(),
   accountId: z.string().optional(),
 })
 

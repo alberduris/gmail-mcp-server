@@ -58,14 +58,25 @@ export class GmailService {
   async listEmails(options: {
     maxResults?: number
     query?: string
+    includeArchived?: boolean
     includeSpamTrash?: boolean
   }): Promise<gmail_v1.Schema$Message[]> {
     console.error(`🔍 DEBUG: listEmails called for account ${this.config.email}`)
     console.error(`🔍 DEBUG: options:`, JSON.stringify(options))
+    
+    let query = options.query || ""
+    
+    // Si includeArchived es false (default), solo mostrar emails del INBOX
+    if (!options.includeArchived) {
+      const inboxFilter = "in:inbox"
+      query = query ? `(${query}) AND ${inboxFilter}` : inboxFilter
+    }
+    // Si includeArchived es true, no añadir filtro (mostrar todos los emails)
+    
     const response = await this.gmail.users.messages.list({
       userId: "me",
       maxResults: options.maxResults || 500,
-      q: options.query || "",
+      q: query,
       includeSpamTrash: options.includeSpamTrash || false,
     })
 

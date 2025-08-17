@@ -14,6 +14,7 @@ export async function handleSearchEmails(
       maxResults: input.maxResults,
       query: input.query,
       includeSpamTrash: input.includeSpamTrash,
+      includeArchived: true, // Para search permitir buscar en archivados por defecto
     })
 
     if (messages.length === 0) {
