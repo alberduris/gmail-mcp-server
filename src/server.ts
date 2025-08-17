@@ -18,6 +18,7 @@ import { handleListAccounts } from "./handlers/list-accounts"
 import { handleTrashEmail } from "./handlers/trash-email"
 import { handleUntrashEmail } from "./handlers/untrash-email"
 import { handleBulkTrashEmails } from "./handlers/bulk-trash-emails"
+import { handleGetEmailCount } from "./handlers/get-email-count"
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
 const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
@@ -336,6 +337,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["query"],
         },
       },
+      {
+        name: "get_email_count",
+        description: "Get total and unread email counts for a specific label (INBOX, SENT, DRAFT, TRASH, SPAM, etc.)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            labelId: {
+              type: "string",
+              description: "Label ID to get counts for (INBOX, SENT, DRAFT, TRASH, SPAM, STARRED, IMPORTANT, UNREAD)",
+              default: "INBOX",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+        },
+      },
     ],
   }
 })
@@ -377,6 +396,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "bulk_trash_emails":
       return handleBulkTrashEmails(accountManager, args)
     
+    case "get_email_count":
+      return handleGetEmailCount(accountManager, args)
+    
     default:
       throw new Error(`Unknown tool: ${request.params.name}`)
   }
@@ -401,7 +423,7 @@ async function main() {
   })
   
   console.error(
-    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails"
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails, get_email_count"
   )
 }
 

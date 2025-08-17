@@ -189,6 +189,26 @@ export class GmailService {
     return result
   }
 
+  async getLabelCounts(labelId: string): Promise<{
+    messagesTotal: number
+    messagesUnread: number
+    threadsTotal: number
+    threadsUnread: number
+  }> {
+    const response = await this.gmail.users.labels.get({
+      userId: "me",
+      id: labelId,
+    })
+
+    const label = response.data
+    return {
+      messagesTotal: label.messagesTotal || 0,
+      messagesUnread: label.messagesUnread || 0,
+      threadsTotal: label.threadsTotal || 0,
+      threadsUnread: label.threadsUnread || 0,
+    }
+  }
+
   parseEmailDetails(message: gmail_v1.Schema$Message): EmailDetails {
     const headers = this.extractHeaders(message)
     
