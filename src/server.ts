@@ -18,6 +18,9 @@ import { handleListAccounts } from "./handlers/list-accounts"
 import { handleTrashEmail } from "./handlers/trash-email"
 import { handleUntrashEmail } from "./handlers/untrash-email"
 import { handleBulkTrashEmails } from "./handlers/bulk-trash-emails"
+import { handleArchiveEmail } from "./handlers/archive-email"
+import { handleBulkArchiveEmails } from "./handlers/bulk-archive-emails"
+import { handleDownloadEmail } from "./handlers/download-email"
 import { handleGetEmailCount } from "./handlers/get-email-count"
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
@@ -338,6 +341,76 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "archive_email",
+        description: "Archive an email (remove from inbox, but keep searchable in 'All Mail')",
+        inputSchema: {
+          type: "object",
+          properties: {
+            emailId: {
+              type: "string",
+              description: "The email ID to archive",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["emailId"],
+        },
+      },
+      {
+        name: "bulk_archive_emails",
+        description: "Archive multiple emails based on search query (e.g., from:sender@domain.com)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Gmail search query to find emails (e.g., 'from:noreply@example.com', 'subject:newsletter')",
+            },
+            maxResults: {
+              type: "number",
+              description: "Maximum number of emails to process (1-500, default: 500)",
+              default: 500,
+              minimum: 1,
+              maximum: 500,
+            },
+            preview: {
+              type: "boolean",
+              description: "Show preview of emails before archiving (default: true)",
+              default: true,
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "download_email",
+        description: "Download an email as .eml file (RFC 822 format) for backup, migration, or analysis. IMPORTANT: outputDir must be an absolute path (e.g., /Users/username/Downloads) as relative paths resolve relative to the MCP server location, not the client.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            emailId: {
+              type: "string",
+              description: "The email ID to download",
+            },
+            outputDir: {
+              type: "string",
+              description: "ABSOLUTE directory path to save the .eml file (e.g., /Users/username/Downloads, C:\\Users\\username\\Downloads). Relative paths are not supported.",
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+          required: ["emailId", "outputDir"],
+        },
+      },
+      {
         name: "get_email_count",
         description: "Get total and unread email counts for a specific label (INBOX, SENT, DRAFT, TRASH, SPAM, etc.)",
         inputSchema: {
@@ -396,6 +469,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "bulk_trash_emails":
       return handleBulkTrashEmails(accountManager, args)
     
+    case "archive_email":
+      return handleArchiveEmail(accountManager, args)
+    
+    case "bulk_archive_emails":
+      return handleBulkArchiveEmails(accountManager, args)
+    
+    case "download_email":
+      return handleDownloadEmail(accountManager, args)
+    
     case "get_email_count":
       return handleGetEmailCount(accountManager, args)
     
@@ -423,7 +505,7 @@ async function main() {
   })
   
   console.error(
-    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails, get_email_count"
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails, archive_email, bulk_archive_emails, download_email, get_email_count"
   )
 }
 

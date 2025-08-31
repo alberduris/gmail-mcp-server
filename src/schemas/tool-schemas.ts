@@ -80,6 +80,24 @@ export const GetEmailCountSchema = z.object({
   accountId: z.string().optional(),
 })
 
+export const ArchiveEmailSchema = z.object({
+  emailId: z.string(),
+  accountId: z.string().optional(),
+})
+
+export const BulkArchiveEmailsSchema = z.object({
+  query: z.string().min(1),
+  maxResults: z.number().min(1).max(500).default(500).optional(),
+  preview: z.boolean().default(true).optional(),
+  accountId: z.string().optional(),
+})
+
+export const DownloadEmailSchema = z.object({
+  emailId: z.string(),
+  outputDir: z.string(),
+  accountId: z.string().optional(),
+})
+
 export type ListEmailsInput = z.infer<typeof ListEmailsSchema>
 export type GetEmailDetailsInput = z.infer<typeof GetEmailDetailsSchema>
 export type SendEmailInput = z.infer<typeof SendEmailSchema>
@@ -92,3 +110,6 @@ export type TrashEmailInput = z.infer<typeof TrashEmailSchema>
 export type UntrashEmailInput = z.infer<typeof UntrashEmailSchema>
 export type BulkTrashEmailsInput = z.infer<typeof BulkTrashEmailsSchema>
 export type GetEmailCountInput = z.infer<typeof GetEmailCountSchema>
+export type ArchiveEmailInput = z.infer<typeof ArchiveEmailSchema>
+export type BulkArchiveEmailsInput = z.infer<typeof BulkArchiveEmailsSchema>
+export type DownloadEmailInput = z.infer<typeof DownloadEmailSchema>

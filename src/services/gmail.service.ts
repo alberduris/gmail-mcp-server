@@ -2,6 +2,8 @@ import { google, gmail_v1 } from "googleapis"
 import { OAuth2Client } from "google-auth-library"
 import { EmailDetails, GmailClient } from "../types"
 import { extractEmailBody } from "../utils/email-parser"
+import { writeFileSync } from "fs"
+import { join } from "path"
 
 interface GmailServiceConfig {
   clientId: string
@@ -185,6 +187,63 @@ export class GmailService {
         }
       })
     }
+  }
+
+  async archiveEmail(messageId: string): Promise<gmail_v1.Schema$Message> {
+    const response = await this.gmail.users.messages.modify({
+      userId: "me",
+      id: messageId,
+      requestBody: {
+        removeLabelIds: ["INBOX"]
+      }
+    })
+    return response.data
+  }
+
+  async batchArchiveEmails(messageIds: string[]): Promise<void> {
+    // Gmail batchModify supports up to 1000 messages per request
+    const batchSize = 1000
+    
+    for (let i = 0; i < messageIds.length; i += batchSize) {
+      const batch = messageIds.slice(i, i + batchSize)
+      
+      await this.gmail.users.messages.batchModify({
+        userId: "me",
+        requestBody: {
+          ids: batch,
+          removeLabelIds: ["INBOX"]
+        }
+      })
+    }
+  }
+
+  async downloadEmailAsEml(messageId: string): Promise<{ rawData: Buffer; subject: string }> {
+    // Get the raw email data
+    const rawResponse = await this.gmail.users.messages.get({
+      userId: "me",
+      id: messageId,
+      format: "raw"
+    })
+
+    // Convert base64url to standard base64
+    const base64 = (rawResponse.data.raw || '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+
+    const buffer = Buffer.from(base64, 'base64')
+
+    // Get subject for filename
+    const metadataResponse = await this.gmail.users.messages.get({
+      userId: "me", 
+      id: messageId,
+      format: "metadata",
+      metadataHeaders: ["Subject"]
+    })
+
+    const subject = metadataResponse.data.payload?.headers
+      ?.find(h => h.name === "Subject")?.value || "email"
+
+    return { rawData: buffer, subject }
   }
 
   extractHeaders(message: gmail_v1.Schema$Message): { [key: string]: string } {
