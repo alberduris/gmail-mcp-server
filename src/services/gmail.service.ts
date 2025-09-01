@@ -217,6 +217,22 @@ export class GmailService {
     }
   }
 
+  async batchPermanentDelete(messageIds: string[]): Promise<void> {
+    // Gmail batchDelete supports up to 1000 messages per request
+    const batchSize = 1000
+    
+    for (let i = 0; i < messageIds.length; i += batchSize) {
+      const batch = messageIds.slice(i, i + batchSize)
+      
+      await this.gmail.users.messages.batchDelete({
+        userId: "me",
+        requestBody: {
+          ids: batch
+        }
+      })
+    }
+  }
+
   async downloadEmailAsEml(messageId: string): Promise<{ rawData: Buffer; subject: string }> {
     // Get the raw email data
     const rawResponse = await this.gmail.users.messages.get({

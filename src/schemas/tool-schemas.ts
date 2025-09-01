@@ -20,6 +20,7 @@ export const SendEmailSchema = z.object({
   cc: z.string().optional(),
   bcc: z.string().optional(),
   accountId: z.string().optional(),
+  contentType: z.enum(["plain", "html"]).default("plain").optional(),
 })
 
 export const SearchEmailsSchema = z.object({
@@ -38,6 +39,7 @@ export const CreateDraftSchema = z.object({
   threadId: z.string().optional(),
   inReplyToMessageId: z.string().optional(),
   accountId: z.string().optional(),
+  contentType: z.enum(["plain", "html"]).default("plain").optional(),
 })
 
 export const FindAndDraftReplySchema = z.object({
@@ -45,6 +47,7 @@ export const FindAndDraftReplySchema = z.object({
   replyBody: z.string().optional(),
   maxResults: z.number().min(1).max(500).default(500).optional(),
   accountId: z.string().optional(),
+  contentType: z.enum(["plain", "html"]).default("plain").optional(),
 })
 
 export const ExtractForwardedContentSchema = z.object({
@@ -98,6 +101,12 @@ export const DownloadEmailSchema = z.object({
   accountId: z.string().optional(),
 })
 
+export const EmptyTrashSchema = z.object({
+  maxResults: z.number().min(1).max(500).default(500).optional(),
+  preview: z.boolean().default(true).optional(),
+  accountId: z.string().optional(),
+})
+
 export type ListEmailsInput = z.infer<typeof ListEmailsSchema>
 export type GetEmailDetailsInput = z.infer<typeof GetEmailDetailsSchema>
 export type SendEmailInput = z.infer<typeof SendEmailSchema>
@@ -113,3 +122,4 @@ export type GetEmailCountInput = z.infer<typeof GetEmailCountSchema>
 export type ArchiveEmailInput = z.infer<typeof ArchiveEmailSchema>
 export type BulkArchiveEmailsInput = z.infer<typeof BulkArchiveEmailsSchema>
 export type DownloadEmailInput = z.infer<typeof DownloadEmailSchema>
+export type EmptyTrashInput = z.infer<typeof EmptyTrashSchema>

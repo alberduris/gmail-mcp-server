@@ -22,6 +22,7 @@ import { handleArchiveEmail } from "./handlers/archive-email"
 import { handleBulkArchiveEmails } from "./handlers/bulk-archive-emails"
 import { handleDownloadEmail } from "./handlers/download-email"
 import { handleGetEmailCount } from "./handlers/get-email-count"
+import { handleEmptyTrash } from "./handlers/empty-trash"
 
 const CLIENT_ID = process.env.GMAIL_CLIENT_ID
 const CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET
@@ -165,6 +166,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Account ID to use (uses default account if not specified)",
             },
+            contentType: {
+              type: "string",
+              enum: ["plain", "html"],
+              default: "plain",
+              description: "Content type: 'plain' for text/plain, 'html' for text/html with formatting support",
+            },
           },
           required: ["to", "subject", "body"],
         },
@@ -228,6 +235,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Account ID to use (uses default account if not specified)",
             },
+            contentType: {
+              type: "string",
+              enum: ["plain", "html"],
+              default: "plain",
+              description: "Content type: 'plain' for text/plain, 'html' for text/html with formatting support",
+            },
           },
           required: ["senderName"],
         },
@@ -269,6 +282,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             accountId: {
               type: "string",
               description: "Account ID to use (uses default account if not specified)",
+            },
+            contentType: {
+              type: "string",
+              enum: ["plain", "html"],
+              default: "plain",
+              description: "Content type: 'plain' for text/plain, 'html' for text/html with formatting support",
             },
           },
           required: ["to", "subject", "body"],
@@ -428,6 +447,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: "empty_trash",
+        description: "Permanently delete all emails in trash (cannot be undone)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            maxResults: {
+              type: "number",
+              description: "Maximum number of emails to delete (1-500)",
+              default: 500,
+              minimum: 1,
+              maximum: 500,
+            },
+            preview: {
+              type: "boolean",
+              description: "Show preview of emails before permanent deletion (default: true)",
+              default: true,
+            },
+            accountId: {
+              type: "string",
+              description: "Account ID to use (uses default account if not specified)",
+            },
+          },
+        },
+      },
     ],
   }
 })
@@ -481,6 +525,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     case "get_email_count":
       return handleGetEmailCount(accountManager, args)
     
+    case "empty_trash":
+      return handleEmptyTrash(accountManager, args)
+    
     default:
       throw new Error(`Unknown tool: ${request.params.name}`)
   }
@@ -505,7 +552,7 @@ async function main() {
   })
   
   console.error(
-    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails, archive_email, bulk_archive_emails, download_email, get_email_count"
+    "\n🔧 Tools available: list_emails, get_email_details, send_email, search_emails, find_and_draft_reply, create_draft, extract_forwarded_content, list_accounts, trash_email, untrash_email, bulk_trash_emails, archive_email, bulk_archive_emails, download_email, get_email_count, empty_trash"
   )
 }
 

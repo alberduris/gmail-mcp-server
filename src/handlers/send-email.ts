@@ -33,8 +33,9 @@ Always prefer creating drafts that you can review and send manually.`,
       }
     }
     
+    const contentType = input.contentType === "html" ? "text/html" : "text/plain"
     const messageParts = [
-      `Content-Type: text/plain; charset="UTF-8"`,
+      `Content-Type: ${contentType}; charset="UTF-8"`,
       `MIME-Version: 1.0`,
       `Content-Transfer-Encoding: 7bit`,
       `To: ${input.to}`,

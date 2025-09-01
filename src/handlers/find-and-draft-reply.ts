@@ -60,9 +60,10 @@ export async function handleFindAndDraftReply(
       ? `${existingReferences} ${messageId}`.trim()
       : messageId
 
+    const contentType = input.contentType === "html" ? "text/html" : "text/plain"
     const draftMessage = [
       `MIME-Version: 1.0`,
-      `Content-Type: text/plain; charset=UTF-8`,
+      `Content-Type: ${contentType}; charset=UTF-8`,
       `Content-Transfer-Encoding: 8bit`,
       `To: ${replyToEmail}`,
       `Subject: ${encodeSubject(replySubject)}`,

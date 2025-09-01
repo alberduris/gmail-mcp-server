@@ -11,9 +11,10 @@ export async function handleCreateDraft(
     const gmailService = accountManager.getAccount(input.accountId)
     const accountInfo = accountManager.getAccountInfo(input.accountId)
     
+    const contentType = input.contentType === "html" ? "text/html" : "text/plain"
     const messageParts = [
       `MIME-Version: 1.0`,
-      `Content-Type: text/plain; charset=UTF-8`,
+      `Content-Type: ${contentType}; charset=UTF-8`,
       `Content-Transfer-Encoding: 8bit`,
       `To: ${input.to}`,
     ]
